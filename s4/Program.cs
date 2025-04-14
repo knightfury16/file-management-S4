@@ -1,3 +1,5 @@
+using Amazon.S3;
+using Microsoft.Extensions.Options;
 using s4.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<AwsConfig>(builder.Configuration.GetSection(nameof(AwsConfig)));
+
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var awsConfig = sp.GetRequiredService<IOptions<AwsConfig>>().Value;
+    return new AmazonS3Client(
+        awsConfig.AwsAccessKey,
+        awsConfig.AwsSecretKey,
+        Amazon.RegionEndpoint.APSoutheast1
+    );
+});
 
 var app = builder.Build();
 
