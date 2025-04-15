@@ -1,4 +1,5 @@
 using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -38,6 +39,28 @@ public class DownloadController : ControllerBase
 
         var res = await _s3Client.GetObjectAsync(_awsConfig.Value.BucketName, key);
         return File(res.ResponseStream, res.Headers.ContentType, res.Metadata["file-name"]);
+    }
+
+    [HttpGet("PreSignedUrl")]
+    public async Task<IActionResult> GetPresignedDownloadUrl(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return BadRequest("Give a valid key");
+
+        var fileExists = await DoesS3ObjectExists(key);
+
+        if (!fileExists)
+            return NotFound(key);
+
+        var preSignUrlRequest = new GetPreSignedUrlRequest
+        {
+            BucketName = _awsConfig.Value.BucketName,
+            Key = key,
+            Expires = DateTime.Now.AddMinutes(10),
+            Verb = HttpVerb.GET,
+        };
+        var res = _s3Client.GetPreSignedURL(preSignUrlRequest);
+        return Ok(new { Url = res });
     }
 
     private async Task<bool> DoesS3ObjectExists(string key)
