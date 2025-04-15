@@ -25,7 +25,7 @@ public class DownloadController : ControllerBase
         _s3Client = s3Client;
     }
 
-    [HttpPost("DirectDownload")]
+    [HttpGet("DirectDownload")]
     public async Task<IActionResult> DirectUpload(string key)
     {
         if (string.IsNullOrEmpty(key))
